@@ -6,7 +6,7 @@ import io
 
 st.set_page_config(page_title="Flagged Data Extractor", layout="centered")
 st.title("Flagged Data Extractor")
-st.write("Upload your template and source files. Processed results will be available for download.")
+st.write("Upload your data files(which have colored duplicate inputs) and submission file(where all the duplicate data will be saved).\nProcessed results will be available for download.")
 
 # Toggle for color coding
 COLOR_CODE_BY_SOURCE_FILE = st.checkbox("Color code rows by source file", value=False)
