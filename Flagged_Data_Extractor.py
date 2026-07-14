@@ -11,7 +11,9 @@ st.markdown("""
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif !important;
     }
-    
+    body{
+        margin-top:none;
+    }
     [data-testid="stFileUploader"] {
         margin-bottom: 2rem !important;
     }
