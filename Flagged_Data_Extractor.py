@@ -24,7 +24,7 @@ st.markdown("""
     /* Makes the button taller and the text larger */
     [data-testid="stButton"] button {
         font-size: 20px !important;
-        font-weight: 600 !important;
+        font-weight: 800 !important;
         padding: 1.5rem !important;
     }
     </style>
