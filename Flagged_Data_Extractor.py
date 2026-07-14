@@ -1,5 +1,6 @@
 import streamlit as st
 import openpyxl
+import streamlit.components.v1 as components
 from openpyxl.utils import get_column_letter, range_boundaries
 import io
 
@@ -160,6 +161,22 @@ if st.button("Process Files", type="primary", use_container_width=True):
                 type="primary",
                 use_container_width=True
             )
+
+            # Auto-scroll snippet
+            components.html(
+                """
+                <script>
+                    var main = window.parent.document.querySelector('.main');
+                    if (main) {
+                        main.scrollTo({ top: main.scrollHeight, behavior: 'smooth' });
+                    }
+                </script>
+                """,
+                height=0
+            )
+
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
