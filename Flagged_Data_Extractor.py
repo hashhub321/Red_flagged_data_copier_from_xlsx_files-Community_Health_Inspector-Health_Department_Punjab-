@@ -11,23 +11,36 @@ st.markdown("""
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif !important;
     }
-    body{
-        margin-top:none;
-    }
+    
     [data-testid="stFileUploader"] {
-        margin-bottom: 2rem !important;
+        margin-bottom: 0.5rem !important;
     }
     
-    [data-testid="stButton"] {
-        margin-top: 1rem !important;
-        margin-bottom: 2rem !important;
+    [data-testid="stButton"],
+    [data-testid="stDownloadButton"] {
+        margin-top: 0.5rem !important;
+        margin-bottom: 1rem !important;
     }
 
-    /* Makes the button taller and the text larger */
-    [data-testid="stButton"] button {
-        font-size: 30px !important;
-        font-weight: 800 !important;
-        padding: 1.5rem !important;
+    /* Size formatting for BOTH buttons */
+    [data-testid="stButton"] button,
+    [data-testid="stDownloadButton"] button {
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        padding: 0.75rem !important;
+    }
+    
+    /* Specific styling to make the Download button Green */
+    [data-testid="stDownloadButton"] button {
+        background-color: #16a34a !important; /* Bold green */
+        border-color: #16a34a !important;
+        color: white !important;
+    }
+    
+    /* Hover effect for the green button */
+    [data-testid="stDownloadButton"] button:hover {
+        background-color: #15803d !important; /* Slightly darker green on hover */
+        border-color: #15803d !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -140,10 +153,12 @@ if st.button("Process Files", type="primary", use_container_width=True):
             st.success(f"Data procedure complete. {rows_written} lines written to submission file.")
 
             st.download_button(
-                label="Download completed submission file",
+                label="⬇️ Download Completed File",
                 data=output,
                 file_name="Flagged_Data_Extractor_Result.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                type="primary",
+                use_container_width=True
             )
 
         except Exception as e:
