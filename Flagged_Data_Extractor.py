@@ -93,8 +93,18 @@ def show_download_popup(file_data):
         use_container_width=True
     )
 
-submission_file = st.file_uploader("1. Upload Submission File ", type=["xlsx"])
-source_files = st.file_uploader("2. Upload Source Files (Colored-Data)", type=["xlsx"], accept_multiple_files=True)
+submission_file = st.file_uploader(
+    "1. Upload Submission File ", 
+    type=["xlsx"], 
+    key="submission_uploader_key"  # Added unique key
+)
+
+source_files = st.file_uploader(
+    "2. Upload Source Files (Colored-Data)", 
+    type=["xlsx"], 
+    accept_multiple_files=True, 
+    key="source_uploader_key"      # Added unique key
+)
 
 if st.button("Process Files", type="primary", use_container_width=True):
     if not submission_file or not source_files:
