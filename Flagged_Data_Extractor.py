@@ -30,8 +30,8 @@ def write_cnic(ws, row, col, value):
     if isinstance(cell.value, int):
         cell.number_format = '0'
 
-submission_file = st.file_uploader("1. Upload Submission File (Target)", type=["xlsx"])
-source_files = st.file_uploader("2. Upload Source Files (Data)", type=["xlsx"], accept_multiple_files=True)
+submission_file = st.file_uploader("1. Upload Submission File ", type=["xlsx"])
+source_files = st.file_uploader("2. Upload Source Files (Colored-Data)", type=["xlsx"], accept_multiple_files=True)
 
 if st.button("Process Files"):
     if not submission_file or not source_files:
