@@ -1,0 +1,15 @@
+[theme]
+# A bold, modern blue for buttons and highlights
+primaryColor = "#2563eb"
+
+# Clean white background for the main app
+backgroundColor = "#ffffff"
+
+# Soft slate-gray for the sidebar and file upload areas
+secondaryBackgroundColor = "#f1f5f9"
+
+# Deep gray-black for high-contrast, readable text
+textColor = "#0f172a"
+
+# Modern, clean font
+font = "sans serif"
