@@ -4,6 +4,15 @@ from openpyxl.utils import get_column_letter, range_boundaries
 import io
 
 st.set_page_config(page_title="Flagged Data Extractor", layout="centered")
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 st.title("Flagged Data Extractor")
 st.write("Upload your data files(which have colored duplicate inputs) and submission file(where all the duplicate data will be saved).Processed results will be available for download.")
 
