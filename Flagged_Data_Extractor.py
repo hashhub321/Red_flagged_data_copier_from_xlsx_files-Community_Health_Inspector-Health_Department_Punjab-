@@ -70,6 +70,17 @@ def write_cnic(ws, row, col, value):
     if isinstance(cell.value, int):
         cell.number_format = '0'
 
+@st.dialog("✅ Processing Complete!")
+def show_download_popup(file_data):
+    st.write("Your files have been merged. Tap the button below to save the result.")
+    st.download_button(
+        label="⬇️ Download Completed File",
+        data=file_data,
+        file_name="Flagged_Data_Extractor_Result.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type="primary",
+        use_container_width=True
+    )
 submission_file = st.file_uploader("1. Upload Submission File ", type=["xlsx"])
 source_files = st.file_uploader("2. Upload Source Files (Colored-Data)", type=["xlsx"], accept_multiple_files=True)
 
@@ -145,21 +156,15 @@ if st.button("Process Files", type="primary", use_container_width=True):
                 new_max_row = max(max_row, last_written_row)
                 table.ref = f"{get_column_letter(min_col)}{min_row}:{get_column_letter(max_col)}{new_max_row}"
 
+            # Save Output
             output = io.BytesIO()
             target_wb.save(output)
             output.seek(0)
             
             rows_written = max(0, last_written_row - start_row + 1)
-            st.success(f"Data procedure complete. {rows_written} lines written to submission file.")
-
-            st.download_button(
-                label="⬇️ Download Completed File",
-                data=output,
-                file_name="Flagged_Data_Extractor_Result.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                type="primary",
-                use_container_width=True
-            )
+            
+            # This triggers the pop-up window
+            show_download_popup(output)
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
