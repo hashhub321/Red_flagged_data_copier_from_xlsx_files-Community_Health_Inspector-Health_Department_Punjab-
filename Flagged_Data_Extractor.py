@@ -1,24 +1,11 @@
 import streamlit as st
 import openpyxl
 from openpyxl.utils import get_column_letter, range_boundaries
-from openpyxl.styles import PatternFill
 import io
 
 st.set_page_config(page_title="Flagged Data Extractor", layout="centered")
 st.title("Flagged Data Extractor")
-st.write("Upload your data files(which have colored duplicate inputs) and submission file(where all the duplicate data will be saved).\nProcessed results will be available for download.")
-
-# Toggle for color coding
-COLOR_CODE_BY_SOURCE_FILE = st.checkbox("Color code rows by source file", value=False)
-
-SOURCE_FILE_COLORS = [
-    'FFFCE4EC', 'FFE3F2FD', 'FFE8F5E9', 'FFFFF3E0', 'FFF3E5F5',
-    'FFE0F7FA', 'FFFFFDE7', 'FFEFEBE9', 'FFECEFF1', 'FFFBE9E7',
-]
-
-def fill_for_index(index):
-    color = SOURCE_FILE_COLORS[index % len(SOURCE_FILE_COLORS)]
-    return PatternFill(start_color=color, end_color=color, fill_type='solid')
+st.write("Upload your data files(which have colored duplicate inputs) and submission file(where all the duplicate data will be saved).Processed results will be available for download.")
 
 def find_first_empty_row(ws, key_columns):
     row = 2
@@ -43,7 +30,6 @@ def write_cnic(ws, row, col, value):
     if isinstance(cell.value, int):
         cell.number_format = '0'
 
-# File Uploaders
 submission_file = st.file_uploader("1. Upload Submission File (Target)", type=["xlsx"])
 source_files = st.file_uploader("2. Upload Source Files (Data)", type=["xlsx"], accept_multiple_files=True)
 
@@ -52,7 +38,6 @@ if st.button("Process Files"):
         st.error("Please upload both the submission file and at least one source file.")
     else:
         try:
-            # Load Target
             target_wb = openpyxl.load_workbook(submission_file)
             target_ws = target_wb.active
             target_headers = {str(cell.value).strip(): idx for idx, cell in enumerate(target_ws[1], 1) if cell.value}
@@ -73,12 +58,10 @@ if st.button("Process Files"):
                 'HeadOfFamilyCNIC': 'Head of family CNIC'
             }
 
-            # Process Source Files
-            for file_index, uploaded_source in enumerate(source_files):
+            for uploaded_source in source_files:
                 wb = openpyxl.load_workbook(uploaded_source, data_only=True)
                 ws = wb.active
 
-                row_fill = fill_for_index(file_index) if COLOR_CODE_BY_SOURCE_FILE else None
                 source_headers = {str(cell.value).strip(): idx for idx, cell in enumerate(ws[1], 1) if cell.value}
 
                 for row in ws.iter_rows(min_row=2):
@@ -93,7 +76,6 @@ if st.button("Process Files"):
 
                             if house_cell.fill.patternType == 'solid' and house_cell.value not in (None, ''):
                                 
-                                # 1. Base Info
                                 for src, tgt in base_mapping.items():
                                     if src in source_headers and tgt in target_headers:
                                         value = row[source_headers[src] - 1].value
@@ -102,7 +84,6 @@ if st.button("Process Files"):
                                         else:
                                             target_ws.cell(row=target_row, column=target_headers[tgt], value=value)
 
-                                # 2. Cadre Info
                                 if cadre_col in source_headers and 'CHI Name' in target_headers:
                                     target_ws.cell(row=target_row, column=target_headers['CHI Name'],
                                                     value=row[source_headers[cadre_col] - 1].value)
@@ -115,21 +96,15 @@ if st.button("Process Files"):
                                     target_ws.cell(row=target_row, column=target_headers['House code'],
                                                     value=house_cell.value)
 
-                                if row_fill is not None:
-                                    for col in range(1, max(target_headers.values()) + 1):
-                                        target_ws.cell(row=target_row, column=col).fill = row_fill
-
                                 target_row += 1
 
             last_written_row = target_row - 1
 
-            # Fix Tables
             for table in target_ws.tables.values():
                 min_col, min_row, max_col, max_row = range_boundaries(table.ref)
                 new_max_row = max(max_row, last_written_row)
                 table.ref = f"{get_column_letter(min_col)}{min_row}:{get_column_letter(max_col)}{new_max_row}"
 
-            # Save Output
             output = io.BytesIO()
             target_wb.save(output)
             output.seek(0)
