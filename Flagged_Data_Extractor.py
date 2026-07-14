@@ -101,7 +101,7 @@ submission_file = st.file_uploader(
 
 source_files = st.file_uploader(
     "2. Upload Source Files (Colored-Data)", 
-    type=["xlsx"], 
+    #type=["xlsx"], 
     accept_multiple_files=True, 
     key="source_uploader_key"      # Added unique key
 )
