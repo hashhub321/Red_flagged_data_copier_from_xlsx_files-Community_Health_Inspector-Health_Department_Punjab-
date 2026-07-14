@@ -110,10 +110,10 @@ if st.button("Process Files"):
             output.seek(0)
             
             rows_written = max(0, last_written_row - start_row + 1)
-            st.success(f"Execution complete. {rows_written} row(s) appended.")
+            st.success(f"Data procedure complete. {rows_written} lines written to submission file.")
 
             st.download_button(
-                label="Download Completed File",
+                label="Download completed submission file",
                 data=output,
                 file_name="Flagged_Data_Extractor_Result.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
