@@ -4,6 +4,7 @@ from openpyxl.utils import get_column_letter, range_boundaries
 import io
 
 st.set_page_config(page_title="Flagged Data Extractor", layout="centered")
+
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
@@ -32,18 +33,42 @@ st.markdown("""
     
     /* Specific styling to make the Download button Green */
     [data-testid="stDownloadButton"] button {
-        background-color: #16a34a !important; /* Bold green */
+        background-color: #16a34a !important;
         border-color: #16a34a !important;
         color: white !important;
     }
     
-    /* Hover effect for the green button */
     [data-testid="stDownloadButton"] button:hover {
-        background-color: #15803d !important; /* Slightly darker green on hover */
+        background-color: #15803d !important;
         border-color: #15803d !important;
+    }
+
+    /* Hide the icon on the Submission File uploader */
+    div.st-key-submission_file svg {
+        display: none !important;
+    }
+
+    /* Enlarge the icon on the Source Files uploader */
+    div.st-key-source_files svg {
+        width: 4rem !important;
+        height: 4rem !important;
+    }
+
+    /* --- NEW CSS FOR POPUP POSITION --- */
+    
+    /* Force the dialog box to the absolute center of the screen */
+    [data-testid="stModal"] {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    [data-testid="stModal"] > div {
+        margin: auto !important;
     }
     </style>
 """, unsafe_allow_html=True)
+
 st.title("Flagged Data Extractor")
 st.write("Upload your data files(which have colored duplicate inputs) and submission file(where all the duplicate data will be saved).Processed results will be available for download.")
 
@@ -81,8 +106,10 @@ def show_download_popup(file_data):
         type="primary",
         use_container_width=True
     )
-submission_file = st.file_uploader("1. Upload Submission File ", type=["xlsx"])
-source_files = st.file_uploader("2. Upload Source Files (Colored-Data)", type=["xlsx"], accept_multiple_files=True)
+
+# Added unique keys to target these exact UI elements in CSS
+submission_file = st.file_uploader("1. Upload Submission File ", type=["xlsx"], key="submission_file")
+source_files = st.file_uploader("2. Upload Source Files (Colored-Data)", type=["xlsx"], accept_multiple_files=True, key="source_files")
 
 if st.button("Process Files", type="primary", use_container_width=True):
     if not submission_file or not source_files:
