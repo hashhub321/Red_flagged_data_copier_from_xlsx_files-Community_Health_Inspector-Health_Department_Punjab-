@@ -11,6 +11,22 @@ st.markdown("""
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif !important;
     }
+    
+    [data-testid="stFileUploader"] {
+        margin-bottom: 2rem !important;
+    }
+    
+    [data-testid="stButton"] {
+        margin-top: 1rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    /* Makes the button taller and the text larger */
+    [data-testid="stButton"] button {
+        font-size: 20px !important;
+        font-weight: 600 !important;
+        padding: 1.5rem !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 st.title("Flagged Data Extractor")
@@ -42,7 +58,7 @@ def write_cnic(ws, row, col, value):
 submission_file = st.file_uploader("1. Upload Submission File ", type=["xlsx"])
 source_files = st.file_uploader("2. Upload Source Files (Colored-Data)", type=["xlsx"], accept_multiple_files=True)
 
-if st.button("Process Files"):
+if st.button("Process Files", type="primary", use_container_width=True):
     if not submission_file or not source_files:
         st.error("Please upload both the submission file and at least one source file.")
     else:
