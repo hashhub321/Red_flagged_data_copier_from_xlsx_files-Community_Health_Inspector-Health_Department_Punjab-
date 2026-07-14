@@ -93,18 +93,43 @@ def show_download_popup(file_data):
         use_container_width=True
     )
 
-submission_file = st.file_uploader(
-    "1. Upload Submission File ", 
-    type=["xlsx"], 
-    key="submission_uploader_key"  # Added unique key
-)
+# Wrap the uploaders and the button in a form
+with st.form("upload_and_process_form", clear_on_submit=False):
+    submission_file = st.file_uploader(
+        "1. Upload Submission File ", 
+        type=["xlsx"], 
+        key="submission_key"
+    )
+    
+    source_files = st.file_uploader(
+        "2. Upload Source Files (Colored-Data)", 
+        type=["xlsx"], 
+        accept_multiple_files=True, 
+        key="source_key"
+    )
+    
+    # The submit button belongs to the form now
+    submitted = st.form_submit_button("Process Files", type="primary", use_container_width=True)
 
-source_files = st.file_uploader(
-    "2. Upload Source Files (Colored-Data)", 
-    #type=["xlsx"], 
-    accept_multiple_files=True, 
-    key="source_uploader_key"      # Added unique key
-)
+# Execute logic only when the form is submitted
+if submitted:
+    if not submission_file or not source_files:
+        st.error("Please upload both the submission file and at least one source file.")
+    else:
+        try:
+            target_wb = openpyxl.load_workbook(submission_file)
+            target_ws = target_wb.active
+            
+            # ... [Keep all your existing processing logic exactly the same here] ...
+            
+            output = io.BytesIO()
+            target_wb.save(output)
+            output.seek(0)
+            
+            show_download_popup(output)
+
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 
 if st.button("Process Files", type="primary", use_container_width=True):
     if not submission_file or not source_files:
