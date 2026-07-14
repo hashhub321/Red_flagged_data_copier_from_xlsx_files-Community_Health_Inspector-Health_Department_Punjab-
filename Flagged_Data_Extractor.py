@@ -6,6 +6,60 @@ import zipfile  # NEW IMPORT REQUIRED
 
 # ... [Keep your CSS, UI setup, and helper functions the same] ...
 
+st.set_page_config(page_title="Flagged Data Extractor", layout="centered")
+
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
+    [data-testid="stFileUploader"] { margin-bottom: 0.5rem !important; }
+    [data-testid="stButton"], [data-testid="stDownloadButton"] { margin-top: 0.5rem !important; margin-bottom: 1rem !important; }
+    [data-testid="stButton"] button, [data-testid="stDownloadButton"] button { font-size: 18px !important; font-weight: 600 !important; padding: 0.75rem !important; }
+    [data-testid="stDownloadButton"] button { background-color: #16a34a !important; border-color: #16a34a !important; color: white !important; }
+    [data-testid="stDownloadButton"] button:hover { background-color: #15803d !important; border-color: #15803d !important; }
+    [data-testid="stModal"] { display: flex !important; align-items: center !important; justify-content: center !important; }
+    [data-testid="stModal"] > div { margin: auto !important; }
+    </style>
+""", unsafe_allow_html=True)
+
+st.title("Flagged Data Extractor")
+st.write("Upload your data files (which have colored duplicate inputs) and submission file (where all the duplicate data will be saved). Processed results will be available for download.")
+
+def find_first_empty_row(ws, key_columns):
+    row = 2
+    while True:
+        if all(ws.cell(row=row, column=col).value in (None, '') for col in key_columns):
+            return row
+        row += 1
+        if row > ws.max_row + 1000:
+            return row
+
+def clean_cnic(value):
+    if value is None or value == '': return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        return int(stripped) if stripped.isdigit() else stripped
+    if isinstance(value, float):
+        return int(value) if value.is_integer() else value
+    return value
+
+def write_cnic(ws, row, col, value):
+    cell = ws.cell(row=row, column=col, value=clean_cnic(value))
+    if isinstance(cell.value, int):
+        cell.number_format = '0'
+
+@st.dialog("✅ Processing Complete!")
+def show_download_popup(file_data):
+    st.write("Your files have been merged. Tap the button below to save the result.")
+    st.download_button(
+        label="⬇️ Download Completed File",
+        data=file_data,
+        file_name="Flagged_Data_Extractor_Result.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type="primary",
+        use_container_width=True
+    )
+
 with st.form("upload_and_process_form", clear_on_submit=False):
     submission_file = st.file_uploader("1. Upload Submission File ", type=["xlsx"], key="sub_key")
     source_files = st.file_uploader("2. Upload Source Files (Colored-Data)", type=["xlsx"], accept_multiple_files=True, key="src_key")
