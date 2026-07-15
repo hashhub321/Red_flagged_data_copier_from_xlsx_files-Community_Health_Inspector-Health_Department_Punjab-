@@ -42,7 +42,28 @@ def clean_cnic(value):
     if isinstance(value, float):
         return int(value) if value.is_integer() else value
     return value
+def is_cell_flagged(cell):
+    if cell.value in (None, ''):
+        return False
 
+    # Condition 1: The cell background has a solid fill
+    if cell.fill and cell.fill.patternType == 'solid':
+        return True
+
+    # Condition 2: The text has a custom color (ignoring default black/white/auto)
+    if cell.font and cell.font.color:
+        color = cell.font.color
+        # Check RGB values (ignoring pure black and pure white)
+        if color.type == 'rgb' and color.rgb not in ('FF000000', '00000000', 'FFFFFFFF', '00FFFFFF'):
+            return True
+        # Check Theme colors (Theme 0 and 1 are default black/white)
+        if color.type == 'theme' and color.theme not in (0, 1):
+            return True
+        # Check Indexed colors (8 and 64 are default black/auto in legacy Excel)
+        if color.type == 'indexed' and color.indexed not in (8, 64):
+            return True
+
+    return False
 def write_cnic(ws, row, col, value):
     cell = ws.cell(row=row, column=col, value=clean_cnic(value))
     if isinstance(cell.value, int):
@@ -115,7 +136,7 @@ if submitted:
                             house_cell_idx = source_headers[house_col] - 1
                             house_cell = row[house_cell_idx]
 
-                            if house_cell.fill.patternType == 'solid' and house_cell.value not in (None, ''):
+                            if is_cell_flagged(house_cell):
                                 for src, tgt in base_mapping.items():
                                     if src in source_headers and tgt in target_headers:
                                         value = row[source_headers[src] - 1].value
