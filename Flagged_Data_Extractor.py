@@ -42,12 +42,15 @@ def clean_cnic(value):
     if isinstance(value, float):
         return int(value) if value.is_integer() else value
     return value
+
 def is_cell_flagged(cell):
     if cell.value in (None, ''):
         return False
 
-    # Condition 1: The cell background has a solid fill
-    if cell.fill and cell.fill.patternType == 'solid':
+    # Condition 1: The cell background has any non-default pattern fill
+    # (covers 'solid' and also less-common patterns like 'darkGrid',
+    # 'lightHorizontal', etc., so exotic fills aren't missed)
+    if cell.fill and cell.fill.patternType not in (None, 'none'):
         return True
 
     # Condition 2: The text has a custom color (ignoring default black/white/auto)
@@ -64,10 +67,21 @@ def is_cell_flagged(cell):
             return True
 
     return False
-def write_cnic(ws, row, col, value):
-    cell = ws.cell(row=row, column=col, value=clean_cnic(value))
-    if isinstance(cell.value, int):
-        cell.number_format = '0'
+
+# ------------------------------------------------------------------
+# NEW HELPER FUNCTION — this is the only new "logic" piece added.
+# It wraps is_cell_flagged() and decides whether a cell should be
+# treated as extractable, based on the mode chosen by the user.
+#   mode = "colored"   -> keep old behaviour (extract colored cells)
+#   mode = "uncolored" -> extract cells that have a value but are NOT colored
+# ------------------------------------------------------------------
+def should_extract_cell(cell, mode):
+    if cell.value in (None, ''):
+        return False
+    flagged = is_cell_flagged(cell)
+    if mode == "uncolored":
+        return not flagged
+    return flagged  # default / "colored" mode
 
 @st.dialog("✅ Processing Complete!")
 def show_download_popup(file_data):
@@ -81,9 +95,30 @@ def show_download_popup(file_data):
         use_container_width=True
     )
 
+def write_cnic(ws, row, col, value):
+    cell = ws.cell(row=row, column=col, value=clean_cnic(value))
+    if isinstance(cell.value, int):
+        cell.number_format = '0'
+
 with st.form("upload_and_process_form", clear_on_submit=False):
     submission_file = st.file_uploader("1. Upload Submission File ", type=["xlsx"], key="sub_key")
     source_files = st.file_uploader("2. Upload Source Files (Colored-Data)", type=["xlsx"], accept_multiple_files=True, key="src_key")
+
+    # ------------------------------------------------------------------
+    # NEW UI ELEMENT — toggle to choose extraction target.
+    # Stored as a plain string ("colored" / "uncolored") so it can be
+    # passed straight into should_extract_cell().
+    # ------------------------------------------------------------------
+    extraction_choice = st.radio(
+        "3. Which house codes should be extracted?",
+        options=["Colored house codes (default)", "Un-colored house codes"],
+        index=0,
+        help="Choose 'Colored' if the flagged/duplicate house codes are the ones highlighted. "
+             "Choose 'Un-colored' if instead the highlighted ones should be IGNORED, "
+             "and the plain/un-highlighted house codes are the ones to extract."
+    )
+    extraction_mode = "colored" if extraction_choice.startswith("Colored") else "uncolored"
+
     submitted = st.form_submit_button("Process Files", type="primary", use_container_width=True)
 
 if submitted:
@@ -95,7 +130,7 @@ if submitted:
             if submission_file.size == 0:
                 st.error("❌ Submission file is 0 bytes. If it is open in another app, close it and try again.")
                 st.stop()
-                
+
             target_wb = openpyxl.load_workbook(submission_file)
             target_ws = target_wb.active
             target_headers = {str(cell.value).strip(): idx for idx, cell in enumerate(target_ws[1], 1) if cell.value}
@@ -105,7 +140,7 @@ if submitted:
                 ['District', 'Tehsil', 'UC-Name', 'Head of family CNIC', 'CHI CNIC', 'CHI Name', 'House code']
                 if h in target_headers
             ]
-            
+
             target_row = find_first_empty_row(target_ws, key_cols_for_emptiness)
             start_row = target_row
             base_mapping = {'District': 'District', 'Tehsil': 'Tehsil', 'UC': 'UC-Name', 'HeadOfFamilyCNIC': 'Head of family CNIC'}
@@ -121,7 +156,7 @@ if submitted:
                 except zipfile.BadZipFile:
                     st.error(f"❌ '{uploaded_source.name}' is unreadable or locked by Android. Please make sure the file is closed on your phone before uploading.")
                     st.stop()
-                    
+
                 ws = wb.active
                 source_headers = {str(cell.value).strip(): idx for idx, cell in enumerate(ws[1], 1) if cell.value}
 
@@ -136,7 +171,9 @@ if submitted:
                             house_cell_idx = source_headers[house_col] - 1
                             house_cell = row[house_cell_idx]
 
-                            if is_cell_flagged(house_cell):
+                            # CHANGED LINE: was `if is_cell_flagged(house_cell):`
+                            # now routes through the mode-aware helper.
+                            if should_extract_cell(house_cell, extraction_mode):
                                 for src, tgt in base_mapping.items():
                                     if src in source_headers and tgt in target_headers:
                                         value = row[source_headers[src] - 1].value
@@ -165,7 +202,7 @@ if submitted:
             output = io.BytesIO()
             target_wb.save(output)
             output.seek(0)
-            
+
             show_download_popup(output)
 
         except zipfile.BadZipFile:
