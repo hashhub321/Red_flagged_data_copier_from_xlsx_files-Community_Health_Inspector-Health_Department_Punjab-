@@ -43,14 +43,44 @@ def clean_cnic(value):
         return int(value) if value.is_integer() else value
     return value
 
+# ------------------------------------------------------------------
+# NEW HELPER FUNCTION — decides whether a fill's color is effectively
+# "white" (i.e. visually indistinguishable from an unfilled cell).
+# A solid white fill should NOT count as "flagged/colored", since it
+# carries no visible highlight information.
+# ------------------------------------------------------------------
+def is_white_fill_color(fill):
+    if not fill or fill.patternType in (None, 'none'):
+        return True  # no pattern at all -> treat as "white/no fill"
+
+    color = fill.fgColor
+    if color is None:
+        return True
+
+    if color.type == 'rgb':
+        # FFFFFFFF = opaque white, 00FFFFFF = fully transparent white
+        return color.rgb in ('FFFFFFFF', '00FFFFFF', None)
+
+    if color.type == 'theme':
+        # Theme 0 is "Background 1" (white) in the default Office theme.
+        # A tint can lighten/darken it, but tint 0 (or unset) is pure white.
+        return color.theme == 0 and (color.tint in (0, None))
+
+    if color.type == 'indexed':
+        # 64 = "None"/system default, 9 = legacy palette white
+        return color.indexed in (64, 9)
+
+    return False
+
 def is_cell_flagged(cell):
     if cell.value in (None, ''):
         return False
 
-    # Condition 1: The cell background has any non-default pattern fill
+    # Condition 1: The cell background has any non-default, non-white pattern fill
     # (covers 'solid' and also less-common patterns like 'darkGrid',
-    # 'lightHorizontal', etc., so exotic fills aren't missed)
-    if cell.fill and cell.fill.patternType not in (None, 'none'):
+    # 'lightHorizontal', etc., so exotic fills aren't missed — but a
+    # plain white fill is treated the same as "no fill".)
+    if cell.fill and cell.fill.patternType not in (None, 'none') and not is_white_fill_color(cell.fill):
         return True
 
     # Condition 2: The text has a custom color (ignoring default black/white/auto)
